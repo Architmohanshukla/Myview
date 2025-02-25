@@ -128,7 +128,57 @@ nav a:hover::after { width: 100%; }
     animation: heartbeatPulse 15s infinite ease-in-out, infinite ease;
     box-shadow: 0 0 10px rgba(209, 81, 6, 0.5);
 }*/
+/* Existing styles unchanged, adding CTA-specific styles */
+.cta {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    color: #F2F4F5;
+    background: rgba(0, 255, 185, 0.1);
+    border: 1px solid #00FFB9;
+    border-radius: 5px;
+    text-decoration: none;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
 
+.cta:hover {
+    background: #00FFB9;
+    color: #1A1A2E;
+    box-shadow: 0 0 15px rgba(0, 255, 185, 0.5);
+}
+
+/* Existing nav styles sufficient for "About Me" link */
+nav a {
+    color: #F2F4F5;
+    margin: 5px 15px;
+    text-decoration: none;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+nav a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 1px;
+    background: #00FFB9;
+    bottom: -5px;
+    left: 0;
+    transition: width 0.3s ease;
+}
+
+nav a:hover { color: #00FFB9; }
+nav a:hover::after { width: 100%; }
+
+/* Rest of your existing CSS remains unchanged */
 /* Horizontal Gallery */
 .horizontal-gallery {
     max-width: 1200px;
