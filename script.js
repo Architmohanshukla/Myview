@@ -8,11 +8,11 @@ const galleries = {
     ]
 };
 
-/// Determine Current Page and Path
+// Determine Current Page and Path
 const currentPage = document.body.dataset.page || 'landing';
 const pathSegments = window.location.pathname.split('/').filter(Boolean);
 const currentSection = pathSegments[0] || currentPage;
-const currentSubpath = window.location.hash.slice(1) || ''; // Use hash for subpath
+const currentSubpath = window.location.hash.slice(1) || '';
 
 async function getCurrentContent() {
     if (currentPage === 'landing') return Promise.resolve(galleries.landing);
@@ -21,13 +21,9 @@ async function getCurrentContent() {
     const contentData = await response.json();
     let sectionContent = contentData[currentSection] || [];
 
-    // Filter by subpath if present
     if (currentSubpath) {
-        sectionContent = sectionContent.filter(item => item.name === currentSubpath);
-        if (sectionContent.length > 0 && sectionContent[0].type === 'folder') {
-            // Simulate subfolder content (for static site, assumes flat structure or manual subfolder JSON)
-            return sectionContent[0].subtopics || sectionContent;
-        }
+        console.warn('Subfolder support requires additional JSON files or server-side logic');
+        sectionContent = sectionContent.filter(item => item.name.startsWith(currentSubpath));
     }
 
     const enrichedContent = await Promise.all(sectionContent.map(async item => {
@@ -250,76 +246,55 @@ function createHorizontalGallery() {
     });
 }
 
-// Subpage Content (Thought Nodes & Sub-Content)
+// Subpage Content (Sidebar & Notes)
 function createSubpageContent() {
-    const nodesContainer = document.getElementById('thought-nodes');
-    const subContent = document.getElementById('sub-content');
-    if (!nodesContainer || !subContent) return;
+    const sidebarList = document.getElementById('subtopics');
+    const notesContainer = document.getElementById('notes');
+    const breadcrumbs = document.getElementById('breadcrumbs');
+    if (!sidebarList || !notesContainer || !breadcrumbs) return;
 
-    // If no subpath, show nodes
-    if (!currentSubpath) {
-        nodesContainer.style.display = 'block';
-        subContent.classList.remove('active');
-        nodesContainer.innerHTML = '';
-
-        // Radial layout for nodes
-        const radius = 150;
-        const centerX = nodesContainer.offsetWidth / 2;
-        const centerY = nodesContainer.offsetHeight / 2;
-        galleryImages.forEach((item, index) => {
-            const angle = (index / galleryImages.length) * 2 * Math.PI;
-            const x = centerX + radius * Math.cos(angle) - 50; // Offset by half node width
-            const y = centerY + radius * Math.sin(angle) - 50; // Offset by half node height
-
-            const node = document.createElement('a');
-            node.classList.add('node');
-            node.href = `${currentSection}.html#${item.name}`;
-            node.style.left = `${x}px`;
-            node.style.top = `${y}px`;
-            node.innerHTML = `${item.name.replace(/\.(md|pdf|jpg)$/, '')}<span>${item.type === 'folder' ? 'Subtopics' : item.type}</span>`;
-            nodesContainer.appendChild(node);
-
-            setTimeout(() => node.classList.add('visible'), index * 100); // Staggered reveal
-        });
-    } else {
-        // Show sub-content for clicked node
-        nodesContainer.style.display = 'none';
-        subContent.classList.add('active');
-        subContent.innerHTML = `<h2>${currentSubpath}</h2>`;
-
-        galleryImages.forEach(item => {
-            if (item.type !== 'folder') {
-                const card = document.createElement('div');
-                card.classList.add('content-card');
-                let contentHTML = `
-                    <h3>${item.name.replace(/\.(md|pdf|jpg)$/, '')}</h3>
-                    <div class="metadata">Type: ${item.type}</div>
-                    <div class="content">
-                `;
-                if (item.type === 'text') {
-                    contentHTML += `<p>${item.content}</p>`;
-                } else if (item.type === 'pdf') {
-                    contentHTML += `<embed src="${item.content}" type="application/pdf" width="100%" height="300px">`;
-                } else if (item.type === 'image') {
-                    contentHTML += `<img src="${item.content}" alt="${item.name}">`;
-                }
-                contentHTML += `</div>`;
-                card.innerHTML = contentHTML;
-
-                card.addEventListener('click', () => {
-                    card.classList.toggle('active');
-                });
-
-                subContent.appendChild(card);
-                setTimeout(() => card.classList.add('visible'), 100);
-            }
+    let breadcrumbHTML = `<a href="${currentSection}.html">${currentSection}</a>`;
+    if (currentSubpath) {
+        const parts = currentSubpath.split('/');
+        let currentPath = '';
+        parts.forEach(part => {
+            currentPath += `${part}/`;
+            breadcrumbHTML += ` > <a href="${currentSection}.html#${currentPath.slice(0, -1)}">${part}</a>`;
         });
     }
+    breadcrumbs.innerHTML = breadcrumbHTML;
+
+    sidebarList.innerHTML = '';
+    galleryImages.forEach(item => {
+        if (item.type === 'folder') {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="${currentSection}.html#${currentSubpath ? currentSubpath + '/' : ''}${item.name}">${item.name}</a>`;
+            sidebarList.appendChild(li);
+        }
+    });
+
+    notesContainer.innerHTML = '';
+    galleryImages.forEach(item => {
+        const card = document.createElement('div');
+        card.classList.add('note-card');
+        let contentHTML = `<h3>${item.name.replace(/\.(md|pdf|jpg)$/, '')}</h3>`;
+        if (item.type === 'text') {
+            contentHTML += `<p>${item.content}</p>`;
+        } else if (item.type === 'pdf') {
+            contentHTML += `<embed src="${item.content}" type="application/pdf" width="100%" height="300px">`;
+        } else if (item.type === 'image') {
+            contentHTML += `<img src="${item.content}" alt="${item.name}">`;
+        } else if (item.type === 'folder') {
+            return;
+        }
+        card.innerHTML = contentHTML;
+        notesContainer.appendChild(card);
+    });
 }
 
 // Gentle Reveal Scroll Effect
 function revealItems() {
-    const items = document.querySelectorAll('.gallery-item, .intro, .about, .contact, .node, .content-card');
+    const items = document.querySelectorAll('.gallery-item, .intro, .about, .contact, .note-card');
     items.forEach(item => {
         const rect = item.getBoundingClientRect();
         if (rect.top < window.innerHeight - 50 && rect.bottom > 0) {
