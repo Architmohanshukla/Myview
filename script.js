@@ -1,62 +1,56 @@
-// Simulated Content Data
-const contentData = {
-    spiritual: [
-        { name: 'meditation.md', type: 'text', content: 'Meditation bridges mind and cosmos...' },
-        { name: 'energy.pdf', type: 'pdf', content: 'content/spiritual/energy.pdf' },
-        { name: 'soul.jpg', type: 'image', content: 'content/spiritual/soul.jpg' },
-        { name: 'mysticism', type: 'folder', subtopics: [
-            { name: 'symbols.md', type: 'text', content: 'Symbols encode the universe’s hidden truths.' }
-        ] }
-    ],
-    technology: [
-        { name: 'ai.md', type: 'text', content: 'Artificial Intelligence: the next frontier...' },
-        { name: 'quantum.pdf', type: 'pdf', content: 'content/technology/quantum.pdf' },
-        { name: 'circuits.jpg', type: 'image', content: 'content/technology/circuits.jpg' }
-    ],
-    biomedical: [
-        { name: 'genetics.md', type: 'text', content: 'Genetics reshapes life’s blueprint.' },
-        { name: 'nanotech.pdf', type: 'pdf', content: 'content/biomedical/nanotech.pdf' },
-        { name: 'cells.jpg', type: 'image', content: 'content/biomedical/cells.jpg' }
-    ],
-    sciences: [
-        { name: 'physics.md', type: 'text', content: 'Physics unravels the fabric of reality.' },
-        { name: 'astronomy.pdf', type: 'pdf', content: 'content/sciences/astronomy.pdf' },
-        { name: 'sciences.webp', type: 'image', content: 'content/sciences/sciences.webp' }
-    ]
-};
-
 // Gallery Data for Landing Page
 const galleries = {
     landing: [
-        { src: 'content/spiritual/spiritual.jpeg', caption: 'Spiritual', meta: 'Mind & Cosmos', link: 'spiritual.html' },
-        { src: 'content/technology/binary.jpg', caption: 'Technology', meta: 'Future Unveiled', link: 'technology.html' },
-        { src: 'content/biomedical/biomedical.jpeg', caption: 'Biomedical', meta: 'Life Rewritten', link: 'biomedical.html' },
-        { src: 'content/sciences/sciences.webp', caption: 'Sciences', meta: 'Reality Decoded', link: 'sciences.html' }
+        { src: 'content/spiritual/soul.jpg', caption: 'Spiritual', meta: 'Mind & Cosmos', link: 'spiritual.html' },
+        { src: 'content/technology/circuits.jpg', caption: 'Technology', meta: 'Future Unveiled', link: 'technology.html' },
+        { src: 'content/biomedical/cells.jpg', caption: 'Biomedical', meta: 'Life Rewritten', link: 'biomedical.html' },
+        { src: 'content/sciences/galaxy.jpg', caption: 'Sciences', meta: 'Reality Decoded', link: 'sciences.html' }
     ]
 };
 
-// Determine Current Page and Path
+/// Determine Current Page and Path
 const currentPage = document.body.dataset.page || 'landing';
 const pathSegments = window.location.pathname.split('/').filter(Boolean);
 const currentSection = pathSegments[0] || currentPage;
-const currentSubpath = pathSegments.slice(1).join('/') || '';
+const currentSubpath = window.location.hash.slice(1) || ''; // Use hash for subpath
 
-function getCurrentContent() {
-    if (currentPage === 'landing') return galleries.landing;
+async function getCurrentContent() {
+    if (currentPage === 'landing') return Promise.resolve(galleries.landing);
+
+    const response = await fetch('/index.json');
+    const contentData = await response.json();
     let sectionContent = contentData[currentSection] || [];
-    let currentLevel = sectionContent;
+
+    // Filter by subpath if present
     if (currentSubpath) {
-        const subpathParts = currentSubpath.split('/');
-        for (let part of subpathParts) {
-            const folder = currentLevel.find(item => item.name === part && item.type === 'folder');
-            if (folder) currentLevel = folder.subtopics;
-            else break;
+        sectionContent = sectionContent.filter(item => item.name === currentSubpath);
+        if (sectionContent.length > 0 && sectionContent[0].type === 'folder') {
+            // Simulate subfolder content (for static site, assumes flat structure or manual subfolder JSON)
+            return sectionContent[0].subtopics || sectionContent;
         }
     }
-    return currentLevel;
+
+    const enrichedContent = await Promise.all(sectionContent.map(async item => {
+        if (item.type === 'text') {
+            const textResponse = await fetch(item.content);
+            return { ...item, content: await textResponse.text() };
+        }
+        return item;
+    }));
+
+    return enrichedContent;
 }
 
-const galleryImages = getCurrentContent();
+// Load content dynamically
+let galleryImages = [];
+getCurrentContent().then(data => {
+    galleryImages = data;
+    if (currentPage === 'landing') {
+        createHorizontalGallery();
+    } else {
+        createSubpageContent();
+    }
+}).catch(err => console.error('Error loading content:', err));
 
 // Background with Enhanced Depth
 const canvas = document.getElementById('background-canvas');
@@ -96,9 +90,9 @@ function drawHexGrid() {
 }
 
 function drawNebula() {
-    if (currentPage === 'biomedical') return; // Removed for Biomedical
+    if (currentPage === 'biomedical') return;
     const gradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2);
-    const color = currentPage === 'spiritual' ? '#9B59B6' : currentPage === 'technology' ? '#00FFB9' : currentPage === 'biomedical' ? '#00D4A0' : '#1E90FF';
+    const color = currentPage === 'spiritual' ? '#9B59B6' : currentPage === 'technology' ? '#00FFB9' : '#1E90FF';
     gradient.addColorStop(0, `${color}20`);
     gradient.addColorStop(1, 'transparent');
     ctx.fillStyle = gradient;
@@ -134,7 +128,7 @@ function drawDNA() {
             ctx.beginPath();
             ctx.arc(x1, y, 2, 0, Math.PI * 2);
             ctx.arc(x2, y, 2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(0, 212, 160, ${0.3 + Math.sin(Date.now() * 0.002) * 0.1})`; // Pulsating
+            ctx.fillStyle = `rgba(0, 212, 160, ${0.3 + Math.sin(Date.now() * 0.002) * 0.1})`;
             ctx.fill();
         }
     });
@@ -256,55 +250,76 @@ function createHorizontalGallery() {
     });
 }
 
-// Subpage Content (Sidebar & Notes)
+// Subpage Content (Thought Nodes & Sub-Content)
 function createSubpageContent() {
-    const sidebarList = document.getElementById('subtopics');
-    const notesContainer = document.getElementById('notes');
-    const breadcrumbs = document.getElementById('breadcrumbs');
-    if (!sidebarList || !notesContainer || !breadcrumbs) return;
+    const nodesContainer = document.getElementById('thought-nodes');
+    const subContent = document.getElementById('sub-content');
+    if (!nodesContainer || !subContent) return;
 
-    let breadcrumbHTML = `<a href="${currentSection}.html">${currentSection}</a>`;
-    if (currentSubpath) {
-        const parts = currentSubpath.split('/');
-        let currentPath = '';
-        parts.forEach(part => {
-            currentPath += `${part}/`;
-            breadcrumbHTML += ` > <a href="${currentSection}.html#${currentPath.slice(0, -1)}">${part}</a>`;
+    // If no subpath, show nodes
+    if (!currentSubpath) {
+        nodesContainer.style.display = 'block';
+        subContent.classList.remove('active');
+        nodesContainer.innerHTML = '';
+
+        // Radial layout for nodes
+        const radius = 150;
+        const centerX = nodesContainer.offsetWidth / 2;
+        const centerY = nodesContainer.offsetHeight / 2;
+        galleryImages.forEach((item, index) => {
+            const angle = (index / galleryImages.length) * 2 * Math.PI;
+            const x = centerX + radius * Math.cos(angle) - 50; // Offset by half node width
+            const y = centerY + radius * Math.sin(angle) - 50; // Offset by half node height
+
+            const node = document.createElement('a');
+            node.classList.add('node');
+            node.href = `${currentSection}.html#${item.name}`;
+            node.style.left = `${x}px`;
+            node.style.top = `${y}px`;
+            node.innerHTML = `${item.name.replace(/\.(md|pdf|jpg)$/, '')}<span>${item.type === 'folder' ? 'Subtopics' : item.type}</span>`;
+            nodesContainer.appendChild(node);
+
+            setTimeout(() => node.classList.add('visible'), index * 100); // Staggered reveal
+        });
+    } else {
+        // Show sub-content for clicked node
+        nodesContainer.style.display = 'none';
+        subContent.classList.add('active');
+        subContent.innerHTML = `<h2>${currentSubpath}</h2>`;
+
+        galleryImages.forEach(item => {
+            if (item.type !== 'folder') {
+                const card = document.createElement('div');
+                card.classList.add('content-card');
+                let contentHTML = `
+                    <h3>${item.name.replace(/\.(md|pdf|jpg)$/, '')}</h3>
+                    <div class="metadata">Type: ${item.type}</div>
+                    <div class="content">
+                `;
+                if (item.type === 'text') {
+                    contentHTML += `<p>${item.content}</p>`;
+                } else if (item.type === 'pdf') {
+                    contentHTML += `<embed src="${item.content}" type="application/pdf" width="100%" height="300px">`;
+                } else if (item.type === 'image') {
+                    contentHTML += `<img src="${item.content}" alt="${item.name}">`;
+                }
+                contentHTML += `</div>`;
+                card.innerHTML = contentHTML;
+
+                card.addEventListener('click', () => {
+                    card.classList.toggle('active');
+                });
+
+                subContent.appendChild(card);
+                setTimeout(() => card.classList.add('visible'), 100);
+            }
         });
     }
-    breadcrumbs.innerHTML = breadcrumbHTML;
-
-    sidebarList.innerHTML = '';
-    galleryImages.forEach(item => {
-        if (item.type === 'folder') {
-            const li = document.createElement('li');
-            li.innerHTML = `<a href="${currentSection}.html#${currentSubpath ? currentSubpath + '/' : ''}${item.name}">${item.name}</a>`;
-            sidebarList.appendChild(li);
-        }
-    });
-
-    notesContainer.innerHTML = '';
-    galleryImages.forEach(item => {
-        const card = document.createElement('div');
-        card.classList.add('note-card');
-        let contentHTML = `<h3>${item.name.replace(/\.(md|pdf|jpg)$/, '')}</h3>`;
-        if (item.type === 'text') {
-            contentHTML += `<p>${item.content}</p>`;
-        } else if (item.type === 'pdf') {
-            contentHTML += `<embed src="${item.content}" type="application/pdf" width="100%" height="300px">`;
-        } else if (item.type === 'image') {
-            contentHTML += `<img src="${item.content}" alt="${item.name}">`;
-        } else if (item.type === 'folder') {
-            return;
-        }
-        card.innerHTML = contentHTML;
-        notesContainer.appendChild(card);
-    });
 }
 
 // Gentle Reveal Scroll Effect
 function revealItems() {
-    const items = document.querySelectorAll('.gallery-item, .intro, .about, .contact, .note-card');
+    const items = document.querySelectorAll('.gallery-item, .intro, .about, .contact, .node, .content-card');
     items.forEach(item => {
         const rect = item.getBoundingClientRect();
         if (rect.top < window.innerHeight - 50 && rect.bottom > 0) {

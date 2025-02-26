@@ -1,0 +1,30 @@
+{
+    "spiritual": [
+      {"name": "meditation.md", "type": "text", "content": "content/spiritual/meditation.md"},
+      {"name": "energy.pdf", "type": "pdf", "content": "content/spiritual/energy.pdf"},
+      {"name": "soul.jpg", "type": "image", "content": "content/spiritual/soul.jpg"},
+      {
+        "name": "mysticism",
+        "type": "folder",
+        "subtopics": [
+          {"name": "symbols.md", "type": "text", "content": "content/spiritual/mysticism/symbols.md"},
+          {"name": "rituals.pdf", "type": "pdf", "content": "content/spiritual/mysticism/rituals.pdf"}
+        ]
+      }
+    ],
+    "technology": [
+      {"name": "ai.md", "type": "text", "content": "content/technology/ai.md"},
+      {"name": "quantum.pdf", "type": "pdf", "content": "content/technology/quantum.pdf"},
+      {"name": "circuits.jpg", "type": "image", "content": "content/technology/circuits.jpg"}
+    ],
+    "biomedical": [
+      {"name": "genetics.md", "type": "text", "content": "content/biomedical/genetics.md"},
+      {"name": "nanotech.pdf", "type": "pdf", "content": "content/biomedical/nanotech.pdf"},
+      {"name": "cells.jpg", "type": "image", "content": "content/biomedical/cells.jpg"}
+    ],
+    "sciences": [
+      {"name": "physics.md", "type": "text", "content": "content/sciences/physics.md"},
+      {"name": "astronomy.pdf", "type": "pdf", "content": "content/sciences/astronomy.pdf"},
+      {"name": "galaxy.jpg", "type": "image", "content": "content/sciences/galaxy.jpg"}
+    ]
+  }
